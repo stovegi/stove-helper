@@ -13,9 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Message struct {
-	*dynamic.Message
-}
+type Message struct{ *dynamic.Message }
 
 func NewMessage(md *desc.MessageDescriptor) *Message {
 	return &Message{dynamic.NewMessage(md)}
@@ -41,16 +39,12 @@ func (s *Service) handlePacket(packet *Packet) {
 		log.Warn().Uint16("magic", binary.BigEndian.Uint16(p)).Int64("ts", packet.time.UnixMilli()).Msg("Invalid packet, maybe not encrypted")
 		return
 	}
-	cmdId := binary.BigEndian.Uint16(p[2:])
-	cmd := s.cmdIdMap[cmdId]
 	headLength := binary.BigEndian.Uint16(p[4:])
 	bodyLength := binary.BigEndian.Uint32(p[6:])
-	head := p[10 : 10+headLength]
-	body := p[10+headLength : 10+uint32(headLength)+bodyLength]
 	packet.head = NewMessage(s.protoMap["PacketHead"])
-	_ = packet.head.Unmarshal(head)
-	packet.body = NewMessage(s.protoMap[cmd])
-	_ = packet.body.Unmarshal(body)
+	_ = packet.head.Unmarshal(p[10 : 10+headLength])
+	packet.body = NewMessage(s.protoMap[s.cmdIdMap[binary.BigEndian.Uint16(p[2:])]])
+	_ = packet.body.Unmarshal(p[10+headLength : 10+uint32(headLength)+bodyLength])
 	s.onPacket(packet)
 }
 
@@ -106,4 +100,5 @@ func (s *Service) onPacket(packet *Packet) {
 		bodyJson, _ = json.Marshal(notify)
 	}
 	fmt.Fprintf(s.rawlog, "- info: %s\n  head: %s\n  body: %s\n", info, headJson, bodyJson)
+	s.rawlog.Sync()
 }

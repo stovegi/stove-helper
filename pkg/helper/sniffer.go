@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StoveGI/stove-helper/pkg/ec2b"
-	"github.com/StoveGI/stove-helper/pkg/net"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -27,6 +25,9 @@ import (
 	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/rs/zerolog/log"
+
+	"github.com/StoveGI/stove-helper/pkg/ec2b"
+	"github.com/StoveGI/stove-helper/pkg/net"
 )
 
 func (s *Service) initSniffer() error {

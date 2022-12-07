@@ -1,8 +1,11 @@
 package helper
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
+	"os"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -41,6 +44,13 @@ func (s *Service) xor(p []byte) {
 	}
 }
 
+func xor(p, key []byte) {
+	for i := 0; i < len(p); i++ {
+		p[i] ^= key[i%4096]
+	}
+}
+
+// bruteforce is a method to find the encryption seed of the client.
 func bruteforce(ms, seed uint64, p []byte) (uint64, []byte) {
 	r1 := csharp.NewRand()
 	r2 := mt19937.NewRand()
@@ -78,8 +88,53 @@ func bruteforce(ms, seed uint64, p []byte) (uint64, []byte) {
 	return 0, nil
 }
 
-func xor(p, key []byte) {
-	for i := 0; i < len(p); i++ {
-		p[i] ^= key[i%4096]
+// clientwind is a method to find the encryption key of the client,
+// which needs the cleartext of the WindSeedClientNotify packet.
+func clientwind(f *os.File, p []byte) []byte {
+	// not tested, use with caution
+	f.Seek(0, 0)
+	data, _ := io.ReadAll(f)
+	c := make([]byte, 2*4096) // 2 blocks
+	for i := 0; i < 4096; i++ {
+		copy(c, data[i:])
+		for j := 0; j < 2*4096; j++ {
+			c[j] = c[j] ^ p[4096+j]
+		}
+		if !bytes.Equal(c[:4096], c[4096:]) {
+			continue
+		}
+		if c[0] == p[0]^0x45 && c[1] == p[1]^0x67 && c[4] == p[4] && c[6] == p[6] && c[7] == p[7] {
+			key := make([]byte, 4096)
+			copy(key, c)
+			log.Info().Bytes("#key", key).Msg("Found key")
+			return key
+		}
 	}
+	return nil
+}
+
+// searchvmem is another method to find the encryption key of the client,
+// which needs the permission to read the memory of the process.
+func searchvmem(f *os.File, p []byte) []byte {
+	// not tested, use with caution
+	f.Seek(0, 0)
+	var n int64
+	c := make([]byte, 4<<20) // 4 MiB
+	for {
+		m, err := f.Read(c[:cap(c)])
+		if err != nil {
+			break
+		}
+		c = c[:m]
+		n += int64(m)
+		for i := 0; i < 4<<20; i += 16 {
+			if c[i] == p[0]^0x45 && c[i+1] == p[1]^0x67 && c[i+4] == p[4] && c[i+6] == p[6] && c[i+7] == p[7] {
+				key := make([]byte, 4096)
+				copy(key, c[i:])
+				log.Info().Bytes("#key", key).Msg("Found key")
+				return key
+			}
+		}
+	}
+	return nil
 }

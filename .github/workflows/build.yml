@@ -91,11 +91,11 @@ jobs:
           cache: true
       - name: Build
         run: |
-          go build -trimpath -ldflags "-s -w" -o stove-helper-${ GITHUB_SHA::7 }.exe cmd/stove-helper/main.go
+          go build -trimpath -ldflags "-s -w" -o stove-helper-${ github.sha::7 }.exe cmd/stove-helper/main.go
           cp config.example.yaml config.yaml
-          zip -r stove-helper-${ GITHUB_SHA::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip stove-helper-${ GITHUB_SHA::7 }.exe config.yaml data LICENSE README.md
+          zip -r stove-helper-${ github.sha::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip stove-helper-${ GITHUB_SHA::7 }.exe config.yaml data LICENSE README.md
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: stove-helper-${ GITHUB_SHA::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip
-          path: stove-helper-${ GITHUB_SHA::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          name: stove-helper-${ github.sha::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          path: stove-helper-${ github.sha::7 }-${{ matrix.goos }}-${{ matrix.goarch }}.zip

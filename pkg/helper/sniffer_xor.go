@@ -35,7 +35,7 @@ func (s *Service) xor(p []byte) {
 		if s.config.Seed == 0 {
 			s.config.Seed = seed
 		}
-		fmt.Fprintf(s.rawlog, "- seed: %d", seed)
+		fmt.Fprintf(s.rawlog, "- seed: %d\n", seed)
 		s.keyStore.keyMap[binary.BigEndian.Uint16(p)] = key
 	}
 	s.keyStore.Unlock()

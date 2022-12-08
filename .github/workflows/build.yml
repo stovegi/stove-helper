@@ -84,10 +84,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Define variables
-        run: |
-          # Hard coded variable
-          git rev-parse --short HEAD > SHORT_COMMIT_HASH
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -95,11 +91,12 @@ jobs:
           cache: true
       - name: Build
         run: |
-          go build -trimpath -ldflags "-s -w" -o stove-helper-${{ SHORT_COMMIT_HASH }}.exe cmd/stove-helper/main.go
+          export SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+          go build -trimpath -ldflags "-s -w -X pkg.ShortCommitHash=$SHORT_COMMIT_HASH" -o stove-helper.exe cmd/stove-helper/main.go
           cp config.example.yaml config.yaml
-          zip -r stove-helper-${{ SHORT_COMMIT_HASH }}-${{ matrix.goos }}-${{ matrix.goarch }}.zip stove-helper-${{ SHORT_COMMIT_HASH }}.exe config.yaml data LICENSE README.md
+          zip -r stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip stove-helper.exe config.yaml data LICENSE README.md
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: stove-helper-${{ SHORT_COMMIT_HASH }}-${{ matrix.goos }}-${{ matrix.goarch }}.zip
-          path: stove-helper-${{ SHORT_COMMIT_HASH }}-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+          name: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
+          path: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip

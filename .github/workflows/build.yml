@@ -76,7 +76,6 @@ jobs:
       matrix:
         goos: [windows]
         goarch: [386, amd64]
-#         goarch: [386, amd64, arm, arm64]
       fail-fast: true
     name: Go ${{ matrix.goos }} ${{ matrix.goarch }} build
     env:
@@ -92,7 +91,8 @@ jobs:
           cache: true
       - name: Build
         run: |
-          go build -trimpath -ldflags "-s -w" -o stove-helper.exe cmd/stove-helper/main.go
+          export SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+          go build -trimpath -ldflags "-s -w -X pkg.ShortCommitHash=$SHORT_COMMIT_HASH" -o stove-helper.exe cmd/stove-helper/main.go
           cp config.example.yaml config.yaml
           zip -r stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip stove-helper.exe config.yaml data LICENSE README.md
       - name: Upload Artifact

@@ -40,11 +40,14 @@ func (s *Service) initSniffer() error {
 		return err
 	}
 	parser := protoparse.Parser{ImportPaths: []string{s.config.DataConfig.ProtoPath}}
-	if err := s.parseProto(parser, "QueryCurrRegionHttpRsp"); err != nil {
-		return err
-	}
-	if err := s.parseProto(parser, "PacketHead"); err != nil {
-		return err
+	for _, name := range []string{
+		"QueryCurrRegionHttpRsp",
+		"PacketHead",
+		"EntityMoveInfo",
+	} {
+		if err := s.parseProto(parser, name); err != nil {
+			return err
+		}
 	}
 	for _, line := range strings.Split(string(p), "\n") {
 		parts := strings.Split(strings.TrimSpace(line), ",")
@@ -180,7 +183,7 @@ func (s *Service) initSecret(url string) {
 	s.keyStore.keyMap[binary.BigEndian.Uint16(key)^0x4567] = key
 }
 
-func (s *Service) runSniffer() {
+func (s *Service) startSniffer() {
 	pcapng, err := os.Create(path.Join(s.config.DataConfig.OutputPath, time.Now().Format("2006-01-02 15-04-05")+".pcapng"))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create pcapng file")

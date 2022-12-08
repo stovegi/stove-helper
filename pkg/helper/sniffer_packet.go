@@ -93,7 +93,7 @@ func (s *Service) onPacket(packet *Packet) {
 			item := &UnionCmd{
 				MessageID: uint16(v.GetFieldByName("message_id").(uint32)),
 			}
-			item.Body = NewMessage(s.protoMap[s.cmdIdMap[uint16(item.MessageID)]])
+			item.Body = NewMessage(s.protoMap[s.cmdIdMap[item.MessageID]])
 			_ = item.Body.Unmarshal(v.GetFieldByName("body").([]byte))
 			notify.CmdList = append(notify.CmdList, item)
 		}
@@ -101,4 +101,5 @@ func (s *Service) onPacket(packet *Packet) {
 	}
 	fmt.Fprintf(s.rawlog, "- info: %s\n  head: %s\n  body: %s\n", info, headJson, bodyJson)
 	s.rawlog.Sync()
+	s.handleMessage(name, packet.body)
 }

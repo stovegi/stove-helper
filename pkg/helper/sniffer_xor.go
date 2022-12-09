@@ -24,18 +24,23 @@ func (s *Service) xor(p []byte) {
 	key := s.keyStore.keyMap[binary.BigEndian.Uint16(p)]
 	if key == nil {
 		seed := s.config.Seed
-		if seed == 0 {
-			seed = s.sentMs
+		if s.serverSeed == 0 {
+			s.serverSeed = s.config.ServerSeed
 		}
-		seed, key = bruteforce(seed, s.serverSeed, p)
-		if key == nil {
-			s.keyStore.Unlock()
-			return
+		if seed != 0 {
+			seed, key = bruteforce(seed, s.serverSeed, p)
+		}
+		if seed == 0 || key == nil {
+			seed, key = bruteforce(s.sentMs, s.serverSeed, p)
+			if key == nil {
+				s.keyStore.Unlock()
+				return
+			}
 		}
 		if s.config.Seed == 0 {
 			s.config.Seed = seed
 		}
-		fmt.Fprintf(s.rawlog, "- seed: %d\n", seed)
+		fmt.Fprintf(s.rawlog, "- seed: %d\n  serverSeed: %d\n", seed, s.serverSeed)
 		s.keyStore.keyMap[binary.BigEndian.Uint16(p)] = key
 	}
 	s.keyStore.Unlock()

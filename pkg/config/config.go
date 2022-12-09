@@ -19,6 +19,7 @@ type Config struct {
 	DataConfig DataConfig `mapstructure:"dataConfig"`
 	Device     string     `mapstructure:"device"`
 	Seed       uint64     `mapstructure:"seed"`
+	ServerSeed uint64     `mapstructure:"serverSeed"`
 }
 
 type DataConfig struct {

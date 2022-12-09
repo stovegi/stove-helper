@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var slices = map[int][][]string{
+var tileMap = map[int][][]string{
 	3: {{
 		"https://act.hoyoverse.com/map_manage/20221122/4dccdca89bc40c396ee3adb3d2a54535_678692064171919141.png",
 		"https://act.hoyoverse.com/map_manage/20221122/a733f5730bc89b2a8713c79217316a48_9138588374623790954.png",
@@ -32,7 +32,7 @@ var slices = map[int][][]string{
 	}},
 }
 
-var zooms = map[int]float32{
+var zoomMap = map[int]float32{
 	2: 0.0625,
 	3: 0.125,
 	4: 0.25,
@@ -60,12 +60,41 @@ func handleTile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	url := slices[scene][i][j]
-	url += fmt.Sprintf("?x-oss-process=image/resize,p_%v/crop,x_%d,y_%d,w_256,h_256/format,webp", zooms[z]*100, xx*256, yy*256)
+	url := tileMap[scene][i][j]
+	url += fmt.Sprintf("?x-oss-process=image/resize,p_%v/crop,x_%d,y_%d,w_256,h_256/format,webp", zoomMap[z]*100, xx*256, yy*256)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func handleIcon(w http.ResponseWriter, r *http.Request) {
-	uri := strings.TrimPrefix(r.RequestURI, "/api/icon")
-	http.Redirect(w, r, "https://api.ambr.top/assets"+uri, http.StatusFound)
+var iconMap = map[string]string{
+	"AvatarIcon":  "https://api.ambr.top/assets/UI",
+	"EquipIcon":   "https://api.ambr.top/assets/UI",
+	"ItemIcon":    "https://api.ambr.top/assets/UI",
+	"Homeworld":   "https://api.ambr.top/assets/UI/furniture",
+	"RelicIcon":   "https://api.ambr.top/assets/UI/reliquary",
+	"MonsterIcon": "https://api.ambr.top/assets/UI/monster",
+	"AnimalIcon":  "https://api.ambr.top/assets/UI/monster",
+}
+
+func (s *Service) handleIcon(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	if id <= 0 {
+		return
+	}
+	var icon string
+	data, ok := s.dataMap[uint32(id)]
+	if ok {
+		icon = data.Icon
+	} else if icon, ok = relicIconMap[uint32(id)]; !ok {
+		return
+	}
+	parts := strings.SplitN(icon, "_", 3)
+	if len(parts) != 3 || parts[0] != "UI" {
+		return
+	}
+	url, ok := iconMap[parts[1]]
+	if !ok {
+		return
+	}
+	url += "/" + icon + ".png"
+	http.Redirect(w, r, url, http.StatusFound)
 }

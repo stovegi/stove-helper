@@ -1,5 +1,6 @@
 /*
-!/output
+!/cache
 !/html
+!/output
 !.gitignore
 !private_key_*.pem

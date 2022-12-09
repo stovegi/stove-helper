@@ -9,8 +9,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -92,7 +90,9 @@ func (s *Service) initSniffer() error {
 			break
 		}
 	}
-	s.initSecret(s.config.DataConfig.DispatchRegion)
+	if err = s.initSecret(s.config.DataConfig.DispatchRegion); err != nil {
+		return err
+	}
 	s.handle, err = pcap.OpenLive(s.config.Device, 1500, true, pcap.BlockForever)
 	if err != nil {
 		return err
@@ -131,56 +131,36 @@ func decrypt(priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
 	return out, nil
 }
 
-func (s *Service) initSecret(url string) {
+func (s *Service) initSecret(url string) error {
 	log.Info().Str("url", url).Msg("Initializing secret")
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	body, err := s.cacheGet(url)
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to create http request")
-		return
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to send http request")
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		log.Error().Int("status", resp.StatusCode).Str("url", url).Msg("Failed to send http request")
-		return
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to read http response")
-		return
+		return err
 	}
 	var v map[string]string
 	if err := json.Unmarshal(body, &v); err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to unmarshal http response")
-		return
+		return err
 	}
 	content, err := base64.StdEncoding.DecodeString(v["content"])
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to decode http response")
-		return
+		return err
 	}
 	body, err = decrypt(s.priv, content)
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to decrypt http response")
-		return
+		return err
 	}
 	pb := dynamic.NewMessage(s.protoMap["QueryCurrRegionHttpRsp"])
 	if err := pb.Unmarshal(body); err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to unmarshal http response")
-		return
+		return err
 	}
 	ec2b, err := ec2b.Load(pb.GetFieldByName("client_secret_key").([]byte))
 	if err != nil {
-		log.Error().Err(err).Str("url", url).Msg("Failed to load ec2b")
-		return
+		return err
 	}
 	key := ec2b.Key()
-	log.Info().Uint16("magic", binary.BigEndian.Uint16(key)^0x4567).Msg("Successfully initialized secret")
 	s.keyStore.keyMap[binary.BigEndian.Uint16(key)^0x4567] = key
+	log.Info().Msg("Successfully initialized secret")
+	return nil
 }
 
 func (s *Service) startSniffer() {

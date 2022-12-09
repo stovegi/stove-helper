@@ -2,7 +2,12 @@ package helper
 
 import (
 	"crypto/rsa"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path"
+	"strings"
 	"sync"
 
 	"github.com/StoveGI/stove-helper/pkg/config"
@@ -29,6 +34,8 @@ type Service struct {
 	outgoing   *net.KCP
 
 	// helper related
+	dataMap map[uint32]*Data
+
 	mu             sync.RWMutex
 	achievementMap map[uint32]*Achievement
 	avatarMap      map[uint32]*Avatar
@@ -42,10 +49,41 @@ func NewService(c config.Config) (*Service, error) {
 	if err := s.initSniffer(); err != nil {
 		return nil, err
 	}
+	if err := s.initHelper(); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
 func (s *Service) Start() error {
 	go s.startSniffer()
 	return s.startHelper()
+}
+
+func (s *Service) cacheGet(url string) ([]byte, error) {
+	name := path.Join("data/cache", strings.NewReplacer(":", "-", "/", "-", "?", "-").Replace(url))
+	body, err := os.ReadFile(name)
+	if err == nil {
+		return body, nil
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status is not ok")
+	}
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.WriteFile(name, body, 0644); err != nil {
+		return nil, err
+	}
+	return body, nil
 }

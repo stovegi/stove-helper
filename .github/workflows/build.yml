@@ -50,8 +50,6 @@ jobs:
     name: Go ${{ matrix.goos }} ${{ matrix.goarch }} build
     env:
       CGO_ENABLED: 1
-      CC: x86_64-linux-musl-gcc
-      CXX: x86_64-linux-musl-g++
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
     steps:

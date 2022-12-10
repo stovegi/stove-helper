@@ -40,35 +40,38 @@ jobs:
 #           name: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
 #           path: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
 
-#   build-linux:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         goos: [linux]
-#         goarch: [386, amd64, arm, arm64]
-#       fail-fast: true
-#     name: Go ${{ matrix.goos }} ${{ matrix.goarch }} build
-#     env:
-#       GOOS: ${{ matrix.goos }}
-#       GOARCH: ${{ matrix.goarch }}
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
-#       - name: Setup Go
-#         uses: actions/setup-go@v3
-#         with:
-#           go-version: 1.19.x
-#           cache: true
-#       - name: Build
-#         run: |
-#           go build -trimpath -ldflags "-s -w" -o stove-helper cmd/stove-helper/main.go
-#           cp config.example.yaml config.yaml
-#           zip -r stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip stove-helper config.yaml data LICENSE README.md
-#       - name: Upload Artifact
-#         uses: actions/upload-artifact@v3
-#         with:
-#           name: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
-#           path: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64]
+      fail-fast: true
+    name: Go ${{ matrix.goos }} ${{ matrix.goarch }} build
+    env:
+      CGO_ENABLED: 1
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.x
+          cache: true
+      - name: Install libpcap-dev
+        run: sudo apt-get install -y libpcap-dev
+      - name: Build
+        run: |
+          go build -trimpath -ldflags "-s -w" -o stove-helper cmd/stove-helper/main.go
+          cp config.example.yaml config.yaml
+          zip -r stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip stove-helper config.yaml data LICENSE README.md
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
+          path: stove-helper_${{ matrix.goos }}_${{ matrix.goarch }}.zip
 
   build-windows:
     runs-on: ubuntu-latest

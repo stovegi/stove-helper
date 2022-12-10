@@ -45,10 +45,13 @@ jobs:
     strategy:
       matrix:
         goos: [linux]
-        goarch: [386, amd64]
-#       fail-fast: true
+        goarch: [amd64]
+      fail-fast: true
     name: Go ${{ matrix.goos }} ${{ matrix.goarch }} build
     env:
+      CGO_ENABLED: 1
+      CC: x86_64-linux-musl-gcc
+      CXX: x86_64-linux-musl-g++
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
     steps:

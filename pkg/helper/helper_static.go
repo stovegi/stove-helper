@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var tileMap = map[int][][]string{
+var tileMap = map[uint32][][]string{
 	3: {{
 		"https://act.hoyoverse.com/map_manage/20221122/4dccdca89bc40c396ee3adb3d2a54535_678692064171919141.png",
 		"https://act.hoyoverse.com/map_manage/20221122/a733f5730bc89b2a8713c79217316a48_9138588374623790954.png",
@@ -32,7 +32,7 @@ var tileMap = map[int][][]string{
 	}},
 }
 
-var zoomMap = map[int]float32{
+var zoomMap = map[uint32]float32{
 	2: 0.0625,
 	3: 0.125,
 	4: 0.25,
@@ -41,27 +41,27 @@ var zoomMap = map[int]float32{
 }
 
 func handleTile(w http.ResponseWriter, r *http.Request) {
-	scene, _ := strconv.Atoi(r.URL.Query().Get("scene"))
-	z, _ := strconv.Atoi(r.URL.Query().Get("z"))
-	y, _ := strconv.Atoi(r.URL.Query().Get("y"))
-	x, _ := strconv.Atoi(r.URL.Query().Get("x"))
-	zz := 1 << (z - 2)
+	scene, _ := strconv.ParseUint(r.URL.Query().Get("scene"), 10, 32)
+	z, _ := strconv.ParseUint(r.URL.Query().Get("z"), 10, 32)
+	y, _ := strconv.ParseUint(r.URL.Query().Get("y"), 10, 32)
+	x, _ := strconv.ParseUint(r.URL.Query().Get("x"), 10, 32)
+	zz := uint64(1 << (z - 2))
 	i, j := y/zz, x/zz
 	yy, xx := y%zz, x%zz
 	switch scene {
 	default:
 		return
 	case 3:
-		if i < 0 || i > 2 || j < 0 || j > 3 || y < 0 || x < 0 {
+		if i > 2 || j > 3 {
 			return
 		}
 	case 5, 7:
-		if i != 0 || j != 0 || y < 0 || x < 0 {
+		if i != 0 || j != 0 {
 			return
 		}
 	}
-	url := tileMap[scene][i][j]
-	url += fmt.Sprintf("?x-oss-process=image/resize,p_%v/crop,x_%d,y_%d,w_256,h_256/format,webp", zoomMap[z]*100, xx*256, yy*256)
+	url := tileMap[uint32(scene)][i][j]
+	url += fmt.Sprintf("?x-oss-process=image/resize,p_%v/crop,x_%d,y_%d,w_256,h_256/format,webp", zoomMap[uint32(z)]*100, xx*256, yy*256)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
@@ -76,7 +76,7 @@ var iconMap = map[string]string{
 }
 
 func (s *Service) handleIcon(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	id, _ := strconv.ParseUint(r.URL.Query().Get("id"), 10, 32)
 	if id <= 0 {
 		return
 	}

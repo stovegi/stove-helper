@@ -3,6 +3,7 @@
 > Yet another Genshin Impact helper (Packet Sniffer + Traveler Toolkit)
 
 The latest GitHub Action build artifact:
+[[Linux x64]](https://nightly.link/StoveGI/stove-helper/workflows/build/main/stove-helper_linux_amd64.zip.zip)
 [[Windows x86]](https://nightly.link/StoveGI/stove-helper/workflows/build/main/stove-helper_windows_386.zip.zip)
 [[Windows x64]](https://nightly.link/StoveGI/stove-helper/workflows/build/main/stove-helper_windows_amd64.zip.zip)
 

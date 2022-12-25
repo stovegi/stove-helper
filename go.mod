@@ -1,4 +1,4 @@
-module github.com/StoveGI/stove-helper
+module github.com/stovegi/stove-helper
 
 go 1.19
 

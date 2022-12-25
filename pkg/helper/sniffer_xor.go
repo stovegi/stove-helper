@@ -10,8 +10,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/StoveGI/stove-helper/pkg/rand/csharp"
-	"github.com/StoveGI/stove-helper/pkg/rand/mt19937"
+	"github.com/stovegi/stove-helper/pkg/rand/csharp"
+	"github.com/stovegi/stove-helper/pkg/rand/mt19937"
 )
 
 type KeyStore struct {

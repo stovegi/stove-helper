@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/StoveGI/stove-helper/pkg/config"
-	"github.com/StoveGI/stove-helper/pkg/helper"
+	"github.com/stovegi/stove-helper/pkg/config"
+	"github.com/stovegi/stove-helper/pkg/helper"
 )
 
 func main() {

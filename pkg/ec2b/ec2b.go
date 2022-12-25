@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/StoveGI/stove-helper/pkg/rand/mt19937"
+	"github.com/stovegi/stove-helper/pkg/rand/mt19937"
 )
 
 type Ec2b struct {

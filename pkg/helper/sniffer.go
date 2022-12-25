@@ -24,8 +24,8 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/rs/zerolog/log"
 
-	"github.com/StoveGI/stove-helper/pkg/ec2b"
-	"github.com/StoveGI/stove-helper/pkg/net"
+	"github.com/stovegi/stove-helper/pkg/ec2b"
+	"github.com/stovegi/stove-helper/pkg/net"
 )
 
 func (s *Service) initSniffer() error {
@@ -93,7 +93,7 @@ func (s *Service) initSniffer() error {
 	if err = s.initSecret(s.config.DataConfig.DispatchRegion); err != nil {
 		return err
 	}
-	s.handle, err = pcap.OpenLive(s.config.Device, 1500, true, pcap.BlockForever)
+	s.handle, err = pcap.OpenLive(s.config.Device, 1600, true, pcap.BlockForever)
 	if err != nil {
 		return err
 	}
@@ -183,6 +183,7 @@ func (s *Service) startSniffer() {
 	}
 	packetSource := gopacket.NewPacketSource(s.handle, s.handle.LinkType())
 	for packet := range packetSource.Packets() {
+		packet.Metadata().CaptureInfo.InterfaceIndex = 0 // fix interface index error
 		err := pcapngWriter.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to write packet to pcapng")

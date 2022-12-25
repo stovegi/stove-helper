@@ -10,10 +10,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/StoveGI/stove-helper/pkg/config"
-	"github.com/StoveGI/stove-helper/pkg/net"
 	"github.com/google/gopacket/pcap"
 	"github.com/jhump/protoreflect/desc"
+	"github.com/stovegi/stove-helper/pkg/config"
+	"github.com/stovegi/stove-helper/pkg/net"
 )
 
 type Service struct {

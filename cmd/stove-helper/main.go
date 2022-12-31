@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
+
 	"github.com/stovegi/stove-helper/pkg/config"
 	"github.com/stovegi/stove-helper/pkg/helper"
 )
 
 func main() {
-	service, err := helper.NewService(config.LoadConfig())
+	ctx := context.Background()
+	cfg := config.LoadConfig()
+	svc, err := helper.NewService(ctx, cfg)
 	if err != nil {
 		panic(err)
 	}
-	if err := service.Start(); err != nil {
+	if err := svc.Start(); err != nil {
 		panic(err)
 	}
 }

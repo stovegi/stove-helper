@@ -268,23 +268,25 @@ func (s *Service) handleMessage(name string, message *Message) {
 		}
 		s.UpdateEntity(items...)
 	case "SceneEntityDisappearNotify":
+		fmt.Println("SceneEntityDisappearNotify", message)
+		ids := []uint32{}
+		for _, v := range message.GetFieldByName("entity_list").([]any) {
+			ids = append(ids, v.(uint32))
+		}
 		switch VisionType(message.GetFieldByName("disappear_type").(int32)) {
 		default:
-			ids := []uint32{}
-			for _, v := range message.GetFieldByName("entity_list").([]any) {
-				ids = append(ids, v.(uint32))
-			}
+			s.DeleteEntity(ids...)
+		case VisionType_VISION_REPLACE:
 			s.DeleteEntity(ids...)
 			s.DeletePlayer(ids...)
 		case VisionType_VISION_MISS:
-			return
 		}
 	case "CombatInvocationsNotify":
 		for _, v := range message.GetFieldByName("invoke_list").([]any) {
 			v := v.(*dynamic.Message)
 			switch CombatTypeArgument(v.GetFieldByName("argument_type").(int32)) {
 			case CombatTypeArgument_ENTITY_MOVE:
-				info := NewMessage(s.protoMap["EntityMoveInfo"])
+				info := NewMessage(s.protos["EntityMoveInfo"])
 				_ = info.Unmarshal(v.GetFieldByName("combat_data").([]byte))
 				data, _ := json.Marshal(info.GetFieldByName("motion_info").(*dynamic.Message))
 				switch id := info.GetFieldByName("entity_id").(uint32); id >> 24 {
@@ -308,7 +310,7 @@ func (s *Service) handleMessage(name string, message *Message) {
 	case "UnionCmdNotify":
 		for _, v := range message.GetFieldByName("cmd_list").([]any) {
 			v := v.(*dynamic.Message)
-			body := NewMessage(s.protoMap[s.cmdIdMap[uint16(v.GetFieldByName("message_id").(uint32))]])
+			body := NewMessage(s.protos[s.cmdIds[uint16(v.GetFieldByName("message_id").(uint32))]])
 			_ = body.Unmarshal(v.GetFieldByName("body").([]byte))
 			s.handleMessage(body.GetMessageDescriptor().GetName(), body)
 		}

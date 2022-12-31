@@ -41,9 +41,9 @@ func (s *Service) handlePacket(packet *Packet) {
 	}
 	headLength := binary.BigEndian.Uint16(p[4:])
 	bodyLength := binary.BigEndian.Uint32(p[6:])
-	packet.head = NewMessage(s.protoMap["PacketHead"])
+	packet.head = NewMessage(s.protos["PacketHead"])
 	_ = packet.head.Unmarshal(p[10 : 10+headLength])
-	packet.body = NewMessage(s.protoMap[s.cmdIdMap[binary.BigEndian.Uint16(p[2:])]])
+	packet.body = NewMessage(s.protos[s.cmdIds[binary.BigEndian.Uint16(p[2:])]])
 	_ = packet.body.Unmarshal(p[10+headLength : 10+uint32(headLength)+bodyLength])
 	s.onPacket(packet)
 }
@@ -93,13 +93,13 @@ func (s *Service) onPacket(packet *Packet) {
 			item := &UnionCmd{
 				MessageID: uint16(v.GetFieldByName("message_id").(uint32)),
 			}
-			item.Body = NewMessage(s.protoMap[s.cmdIdMap[item.MessageID]])
+			item.Body = NewMessage(s.protos[s.cmdIds[item.MessageID]])
 			_ = item.Body.Unmarshal(v.GetFieldByName("body").([]byte))
 			notify.CmdList = append(notify.CmdList, item)
 		}
 		bodyJson, _ = json.Marshal(notify)
 	}
-	fmt.Fprintf(s.rawlog, "- info: %s\n  head: %s\n  body: %s\n", info, headJson, bodyJson)
-	s.rawlog.Sync()
+	fmt.Fprintf(s.file, "- info: %s\n  head: %s\n  body: %s\n", info, headJson, bodyJson)
+	s.file.Sync()
 	s.handleMessage(name, packet.body)
 }

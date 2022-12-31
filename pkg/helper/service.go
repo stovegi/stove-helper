@@ -1,9 +1,10 @@
 package helper
 
 import (
+	"context"
 	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -13,27 +14,28 @@ import (
 	"github.com/google/gopacket/pcap"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/stovegi/stove-helper/pkg/config"
-	"github.com/stovegi/stove-helper/pkg/net"
+	"github.com/stovegi/stove-helper/pkg/kcp"
 )
 
 type Service struct {
-	config *config.Config
+	ctx context.Context
+	cfg *config.Config
 
-	// sniffer related
-	rawlog *os.File
+	// sniffer related fields
+	file   *os.File
 	handle *pcap.Handle
 
 	priv     *rsa.PrivateKey
 	keyStore *KeyStore
-	cmdIdMap map[uint16]string
-	protoMap map[string]*desc.MessageDescriptor
+	cmdIds   map[uint16]string
+	protos   map[string]*desc.MessageDescriptor
 
 	sentMs     uint64
 	serverSeed uint64
-	incoming   *net.KCP
-	outgoing   *net.KCP
+	incoming   *kcp.ControlBlock
+	outgoing   *kcp.ControlBlock
 
-	// helper related
+	// helper related fields
 	dataMap map[uint32]*Data
 
 	mu             sync.RWMutex
@@ -44,8 +46,8 @@ type Service struct {
 	itemMap        map[uint32]*Item
 }
 
-func NewService(c config.Config) (*Service, error) {
-	s := &Service{config: &c}
+func NewService(ctx context.Context, cfg config.Config) (*Service, error) {
+	s := &Service{ctx: ctx, cfg: &cfg}
 	if err := s.initSniffer(); err != nil {
 		return nil, err
 	}
@@ -78,7 +80,7 @@ func (s *Service) cacheGet(url string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status is not ok")
 	}
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

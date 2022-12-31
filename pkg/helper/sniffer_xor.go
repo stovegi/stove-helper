@@ -23,9 +23,9 @@ func (s *Service) xor(p []byte) {
 	s.keyStore.Lock()
 	key := s.keyStore.keyMap[binary.BigEndian.Uint16(p)]
 	if key == nil {
-		seed := s.config.Seed
+		seed := s.cfg.Seed
 		if s.serverSeed == 0 {
-			s.serverSeed = s.config.ServerSeed
+			s.serverSeed = s.cfg.ServerSeed
 		}
 		if seed != 0 {
 			seed, key = bruteforce(seed, s.serverSeed, p)
@@ -37,10 +37,10 @@ func (s *Service) xor(p []byte) {
 				return
 			}
 		}
-		if s.config.Seed == 0 {
-			s.config.Seed = seed
+		if s.cfg.Seed == 0 {
+			s.cfg.Seed = seed
 		}
-		fmt.Fprintf(s.rawlog, "- seed: %d\n  serverSeed: %d\n", seed, s.serverSeed)
+		fmt.Fprintf(s.file, "- seed: %d\n  serverSeed: %d\n", seed, s.serverSeed)
 		s.keyStore.keyMap[binary.BigEndian.Uint16(p)] = key
 	}
 	s.keyStore.Unlock()

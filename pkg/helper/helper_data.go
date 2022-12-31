@@ -9,29 +9,19 @@ import (
 
 func (s *Service) initHelper() (err error) {
 	s.dataMap = make(map[uint32]*Data)
-	if err = s.initData("https://api.ambr.top/v2/en/avatar", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/weapon", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/food", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/material", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/furniture", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/reliquary", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/monster", s.dataMap); err != nil {
-		return err
-	}
-	if err = s.initData("https://api.ambr.top/v2/en/book", s.dataMap); err != nil {
-		return err
+	for _, v := range []string{
+		"https://api.ambr.top/v2/en/avatar",
+		"https://api.ambr.top/v2/en/weapon",
+		"https://api.ambr.top/v2/en/food",
+		"https://api.ambr.top/v2/en/material",
+		"https://api.ambr.top/v2/en/furniture",
+		"https://api.ambr.top/v2/en/reliquary",
+		"https://api.ambr.top/v2/en/monster",
+		"https://api.ambr.top/v2/en/book",
+	} {
+		if err = s.initData(v, s.dataMap); err != nil {
+			return err
+		}
 	}
 	return nil
 }
